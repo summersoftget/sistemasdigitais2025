@@ -1,0 +1,6 @@
+library ieee;
+use ieee.std_logic_1164.all;
+
+package seq_pkg is
+    type state_type is (S0, S1, S2, S3, S4);
+end package;
