@@ -1,0 +1,68 @@
+library ieee;
+use ieee.std_logic_1164.all;
+use work.seq_pkg.all;
+
+entity tb_seq_rec is
+end entity;
+
+architecture behavior of tb_seq_rec is
+    signal SW_tb   : std_logic_vector(0 downto 0) := (others => '0');
+    signal KEY_tb  : std_logic_vector(1 downto 0) := (others => '1');
+    signal LEDR_tb : std_logic_vector(3 downto 0);
+    signal HEX0_tb : std_logic_vector(6 downto 0);
+    signal state_dbg : state_type;
+
+    constant clk_period : time := 10 ns;
+begin
+    uut: entity work.seq_rec_moore_de10
+        port map (
+            SW   => SW_tb,
+            KEY  => KEY_tb,
+            LEDR => LEDR_tb,
+            HEX0 => HEX0_tb,
+            current_state_out => state_dbg
+        );
+
+    -- Clock
+    clk_process: process
+    begin
+        while true loop
+            KEY_tb(0) <= '0';
+            wait for clk_period/2;
+            KEY_tb(0) <= '1';
+            wait for clk_period/2;
+        end loop;
+    end process;
+
+    -- Estímulos
+    stim_proc: process
+    begin
+        -- Reset inicial
+        KEY_tb(1) <= '0';
+        wait for clk_period;
+        KEY_tb(1) <= '1';
+        wait for clk_period;
+
+        -- Sequência 110001
+        SW_tb(0) <= '1'; wait for clk_period; -- 1
+        SW_tb(0) <= '1'; wait for clk_period; -- 1
+        SW_tb(0) <= '0'; wait for clk_period; -- 0
+        SW_tb(0) <= '0'; wait for clk_period; -- 0
+        SW_tb(0) <= '0'; wait for clk_period; -- 0
+        SW_tb(0) <= '1'; wait for clk_period; -- 1
+
+        -- Espera estabilizar
+        wait for clk_period;
+
+        -- Verificação
+        if state_dbg = S4 then
+            report "TESTE OK: Sequência 110001 terminou em S4" severity note;
+        else
+            report "ERRO: Sequência 110001 terminou em " & state'image(state_dbg) severity error;
+        end if;
+
+        -- Encerrar
+        wait for 20 ns;
+        std.env.stop;
+    end process;
+end architecture;
