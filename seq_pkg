@@ -1,6 +1,6 @@
 library ieee;
 use ieee.std_logic_1164.all;
-
+-- movi o state_type para fora do seq_req_moore porque estava dando problema no testbench.
 package seq_pkg is
     type state_type is (S0, S1, S2, S3, S4);
 end package;
