@@ -1,0 +1,77 @@
+library ieee;
+use ieee.std_logic_1164.all;
+
+entity seq_rec_moore_de10 is
+    port (
+        SW       : in std_logic_vector(0 downto 0);
+        KEY      : in std_logic_vector(1 downto 0);
+        LEDR     : out std_logic_vector(3 downto 0);
+        HEX0     : out std_logic_vector(6 downto 0);
+    );
+end entity;
+
+architecture behavior of seq_rec_moore_de10 is
+    signal current_state, next_state: state_type;
+    signal sw_prev: std_logic := '0';
+begin
+
+    process (KEY(0), KEY(1))
+    begin
+        if KEY(1) = '0' then
+            current_state <= S0;
+            sw_prev <= '0';
+        elsif rising_edge(KEY(0)) then
+            current_state <= next_state;
+            sw_prev <= SW(0);
+        end if;
+    end process;
+
+    process (current_state, SW, sw_prev)
+    begin
+        case current_state is
+            when S0 =>
+                if SW(0) = '1' then next_state <= S1;
+                else next_state <= S0;
+                end if;
+
+            when S1 =>
+                if SW(0) = '1' then next_state <= S2;
+                else next_state <= S0;
+                end if;
+
+            when S2 =>
+                if SW(0) = '0' then next_state <= S3;
+                else next_state <= S2;
+                end if;
+
+            when S3 =>
+                if SW(0) = '1' then next_state <= S4;
+                elsif SW(0) = '0' and sw_prev = '1' then
+                    next_state <= S0;
+                else
+                    next_state <= S3;
+                end if;
+
+            when S4 =>
+                if SW(0) = '1' then next_state <= S2;
+                else next_state <= S0;
+                end if;
+        end case;
+    end process;
+
+    with current_state select
+        LEDR <= "0000" when S0,
+
+                "0001" when S1,
+                "0011" when S2,
+                "0100" when S3,
+                "0101" when S4;
+
+    with current_state select
+        HEX0 <= "1000000" when S0,    -- Número 0
+                "0001000" when S1,    -- Letra A
+                "0000011" when S2,    -- Letra B
+                "1000110" when S3,    -- Letra C
+                "0100001" when S4,    -- Letra D
+                "1111111" when others; -- Apagado
+end architecture;
